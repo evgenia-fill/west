@@ -1,5 +1,7 @@
 function runNextTask(taskQueue) {
-    if (taskQueue.running || taskQueue.tasks.length === 0) {
+    if (taskQueue.running || taskQueue.tasks.length === 0
+)
+    {
         return;
     }
     taskQueue.running = true;
@@ -16,8 +18,7 @@ function runNextTask(taskQueue) {
                 });
             });
         }, 0);
-    }
-    else {
+    } else {
         runNextTask(taskQueue);
     }
 }
@@ -29,7 +30,8 @@ export default class TaskQueue {
     }
 
     push(run, dispose, duration) {
-        if (duration === undefined || duration === null) {
+        if (duration === undefined || duration === null
+        ) {
             this.tasks.push({runAndContinue: run, dispose});
         } else {
             this.tasks.push({
@@ -49,5 +51,8 @@ export default class TaskQueue {
         this.push(action, null, 0);
     };
 
-};
+    continueWith(action) {
+        this.push(action, null, 0);
+    };
 
+};

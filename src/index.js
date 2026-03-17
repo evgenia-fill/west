@@ -3,27 +3,32 @@ import Game from './Game.js';
 import TaskQueue from './TaskQueue.js';
 import SpeedRate from './SpeedRate.js';
 
-class Duck extends Card {
+class Creature extends Card {
+    getDescriptions() {
+        return [
+            getCreatureDescription(this),
+            ...super.getDescriptions()
+        ];
+    }
+}
+
+class Duck extends Creature {
     constructor() {
         super('Мирная утка', 2);
     }
 
     quacks() {
-        console.log('quack')
+        console.log('quack');
     }
 
-    swim() {
-        console.log('float: both;')
+    swims() {
+        console.log('float: both;');
     }
-
-    // getDescriptions(){
-    //     super.getDescriptions();
-    // }
 }
 
-class Dog extends Card {
+class Dog extends Creature {
     constructor(name = 'Пес-бандит', power = 3) {
-        super('Пес-бандит', 3);
+        super(name, power);
     }
 }
 
@@ -39,7 +44,7 @@ class Trasher extends Dog {
     }
 
     getDescriptions() {
-        super.getDescriptions();
+        return ['Получает на 1 меньше урона', ...super.getDescriptions()];
     }
 }
 
@@ -51,6 +56,10 @@ class Gatling extends Creature {
     attack(gameContext, continuation) {
         const taskQueue = new TaskQueue();
         const oppositeTable = gameContext.oppositePlayer.table;
+
+        taskQueue.push(onDone => {
+            this.view.showAttack(onDone);
+        });
 
         for (let i = 0; i < oppositeTable.length; i++) {
             const card = oppositeTable[i];
@@ -80,61 +89,50 @@ class Lad extends Dog {
         return this.inGameCount || 0;
     }
 
-    doAfterComingIntoPlay() {
-        Lad.setInGameCount(Lad.getInGameCount() + 1);
-    }
-
-    doBeforeRemoving() {
-        Lad.setInGameCount(Lad.getInGameCount() - 1);
-    }
-
     static getBonus() {
         const count = this.getInGameCount();
         return count * (count + 1) / 2;
     }
 
-    modifyDealedDamageToCreature(value, gameContext, continuation) {
+    doAfterComingIntoPlay(gameContext, continuation) {
+        Lad.setInGameCount(Lad.getInGameCount() + 1);
+        super.doAfterComingIntoPlay(gameContext, continuation);
+    }
+
+    doBeforeRemoving(continuation) {
+        Lad.setInGameCount(Lad.getInGameCount() - 1);
+        super.doBeforeRemoving(continuation);
+    }
+
+    modifyDealedDamageToCreature(value, toCard, gameContext, continuation) {
         const bonus = Lad.getBonus();
-        return super.modifyDealedDamageToCreature(value + bonus, gameContext, continuation);
+        super.modifyDealedDamageToCreature(value + bonus, toCard, gameContext, continuation);
     }
 
     modifyTakenDamage(value, from, gameContext, continuation) {
         const bonus = Lad.getBonus();
-        return super.modifyTakenDamage(value - bonus, from, gameContext, continuation);
+        super.modifyTakenDamage(Math.max(value - bonus, 0), from, gameContext, continuation);
     }
 
     getDescriptions() {
         let descriptions = super.getDescriptions();
-
         if (Lad.prototype.hasOwnProperty('modifyDealedDamageToCreature') ||
             Lad.prototype.hasOwnProperty('modifyTakenDamage')) {
             descriptions.push('Чем их больше, тем они сильнее');
         }
-
         return descriptions;
     }
 }
 
-class Creature extends Card {
-    constructor(name, maxPower) {
-        super(name, maxPower);
-    }
-    getDescriptions() {
-        return [getCreatureDescription(this), super.getDescriptions()];
-    }
-}
 
-// Отвечает, является ли карта уткой.
 function isDuck(card) {
     return card && card.quacks && card.swims;
 }
 
-// Отвечает является ли карта собакой.
 function isDog(card) {
     return card instanceof Dog;
 }
 
-// Дает описание существа по схожести с утками и собаками
 function getCreatureDescription(card) {
     if (isDuck(card) && isDog(card)) {
         return 'Утка-Собака';
@@ -148,27 +146,11 @@ function getCreatureDescription(card) {
     return 'Существо';
 }
 
+const seriffStartDeck = [new Duck(), new Duck(), new Duck(), new Gatling()];
+const banditStartDeck = [new Lad(), new Lad(), new Trasher(), new Dog()];
 
-// Колода Шерифа, нижнего игрока.
-const seriffStartDeck = [
-    new Duck(),
-    new Duck(),
-    new Duck(),
-];
-
-// Колода Бандита, верхнего игрока.
-const banditStartDeck = [
-    new Dog(),
-];
-
-
-// Создание игры.
 const game = new Game(seriffStartDeck, banditStartDeck);
-
-// Глобальный объект, позволяющий управлять скоростью всех анимаций.
 SpeedRate.set(1);
-
-// Запуск игры.
 game.play(false, (winner) => {
     alert('Победил ' + winner.name);
 });
