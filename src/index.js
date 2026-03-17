@@ -12,14 +12,34 @@ class Duck extends Card {
         console.log('quack')
     }
 
-    swim() {
+    swims() {
         console.log('float: both;')
     }
+
+    // getDescriptions(){
+    //     super.getDescriptions();
+    // }
 }
 
 class Dog extends Card {
-    constructor() {
+    constructor(name = 'Пес-бандит', power = 3) {
         super('Пес-бандит', 3);
+    }
+}
+
+class Trasher extends Dog {
+    constructor() {
+        super('Громила', 5);
+    }
+
+    modifyTakenDamage(value, fromCard, gameContext, continuation) {
+        this.view.signalAbility(() => {
+            continuation(Math.max(value - 1, 0));
+        });
+    }
+
+    getDescriptions() {
+        super.getDescriptions();
     }
 }
 
