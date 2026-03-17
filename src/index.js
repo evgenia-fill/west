@@ -3,7 +3,7 @@ import Game from './Game.js';
 import TaskQueue from './TaskQueue.js';
 import SpeedRate from './SpeedRate.js';
 
-class Duck extends Creature {
+class Duck extends Card {
     constructor() {
         super('Мирная утка', 2);
     }
@@ -17,7 +17,7 @@ class Duck extends Creature {
     }
 }
 
-class Dog extends Creature {
+class Dog extends Card {
     constructor() {
         super('Пес-бандит', 3);
     }
