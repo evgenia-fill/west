@@ -23,7 +23,82 @@ class Dog extends Card {
     }
 }
 
+class Gatling extends Creature {
+    constructor() {
+        super('Гатлинг', 6);
+    }
+
+    attack(gameContext, continuation) {
+        const taskQueue = new TaskQueue();
+        const oppositeTable = gameContext.oppositePlayer.table;
+
+        for (let i = 0; i < oppositeTable.length; i++) {
+            const card = oppositeTable[i];
+            if (card) {
+                taskQueue.push(onDone => {
+                    card.takeDamage(2, this, gameContext, onDone);
+                });
+            }
+        }
+
+        taskQueue.continueWith(continuation);
+    }
+}
+
+class Lad extends Dog {
+    static inGameCount = 0;
+
+    constructor() {
+        super('Браток', 2);
+    }
+
+    static setInGameCount(value) {
+        this.inGameCount = value;
+    }
+
+    static getInGameCount() {
+        return this.inGameCount || 0;
+    }
+
+    doAfterComingIntoPlay() {
+        Lad.setInGameCount(Lad.getInGameCount() + 1);
+    }
+
+    doBeforeRemoving() {
+        Lad.setInGameCount(Lad.getInGameCount() - 1);
+    }
+
+    static getBonus() {
+        const count = this.getInGameCount();
+        return count * (count + 1) / 2;
+    }
+
+    modifyDealedDamageToCreature(value, gameContext, continuation) {
+        const bonus = Lad.getBonus();
+        return super.modifyDealedDamageToCreature(value + bonus, gameContext, continuation);
+    }
+
+    modifyTakenDamage(value, from, gameContext, continuation) {
+        const bonus = Lad.getBonus();
+        return super.modifyTakenDamage(value - bonus, from, gameContext, continuation);
+    }
+
+    getDescriptions() {
+        let descriptions = super.getDescriptions();
+
+        if (Lad.prototype.hasOwnProperty('modifyDealedDamageToCreature') ||
+            Lad.prototype.hasOwnProperty('modifyTakenDamage')) {
+            descriptions.push('Чем их больше, тем они сильнее');
+        }
+
+        return descriptions;
+    }
+}
+
 class Creature extends Card {
+    constructor(name, maxPower) {
+        super(name, maxPower);
+    }
     getDescriptions() {
         return [getCreatureDescription(this), super.getDescriptions()];
     }
